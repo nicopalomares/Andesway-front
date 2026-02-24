@@ -3,63 +3,47 @@ import { Vehicle, Testimonial, Feature } from './types';
 export const VEHICLES: Vehicle[] = [
   {
     id: '1',
-    name: 'Toyota Hilux 4x4',
+    title: 'Toyota Hilux 4x4',
     year: 2024,
-    category: 'Pick-up',
-    pricePerDay: 85,
-    image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=800',
-    transmission: 'Manual',
-    passengers: 5
+    category: 'offroad',
+    price_per_day: 85,
+    preview_image_url: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=800',
+    transmission: 'manual',
+    passengers: 5,
+    status: 'available'
   },
   {
     id: '2',
-    name: 'Volkswagen Taos',
+    title: 'Volkswagen Taos',
     year: 2023,
-    category: 'SUV',
-    pricePerDay: 70,
-    image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&q=80&w=800',
-    transmission: 'Automático',
-    passengers: 5
+    category: 'suv',
+    price_per_day: 70,
+    preview_image_url: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&q=80&w=800',
+    transmission: 'automatic',
+    passengers: 5,
+    status: 'available'
   },
   {
     id: '3',
-    name: 'Chevrolet Onix',
+    title: 'Chevrolet Onix',
     year: 2024,
-    category: 'Económico',
-    pricePerDay: 45,
-    image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&q=80&w=800',
-    transmission: 'Manual',
-    passengers: 5
+    category: 'economy',
+    price_per_day: 45,
+    preview_image_url: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&q=80&w=800',
+    transmission: 'manual',
+    passengers: 5,
+    status: 'available'
   },
   {
     id: '4',
-    name: 'Toyota Corolla',
+    title: 'Toyota Corolla',
     year: 2023,
-    category: 'Sedan',
-    pricePerDay: 60,
-    image: 'https://images.unsplash.com/photo-1623860841535-10a44c3f5218?auto=format&fit=crop&q=80&w=800',
-    transmission: 'Automático',
-    passengers: 5
-  },
-  {
-    id: '5',
-    name: 'Jeep Renegade',
-    year: 2023,
-    category: 'SUV',
-    pricePerDay: 75,
-    image: 'https://images.unsplash.com/photo-1566274360936-692e1ec05907?auto=format&fit=crop&q=80&w=800',
-    transmission: 'Manual',
-    passengers: 5
-  },
-  {
-    id: '6',
-    name: 'Fiat Cronos',
-    year: 2024,
-    category: 'Económico',
-    pricePerDay: 40,
-    image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=800',
-    transmission: 'Manual',
-    passengers: 5
+    category: 'sedan',
+    price_per_day: 60,
+    preview_image_url: 'https://images.unsplash.com/photo-1623860841535-10a44c3f5218?auto=format&fit=crop&q=80&w=800',
+    transmission: 'automatic',
+    passengers: 5,
+    status: 'available'
   }
 ];
 

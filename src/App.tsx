@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import VehicleCard from './components/VehicleCard';
@@ -11,10 +11,42 @@ import Features from './components/Features';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
 import BookingCard from './components/BookingCard';
-import { VEHICLES } from './constants';
+import { VEHICLES as MOCK_VEHICLES } from './constants';
 import { motion } from 'motion/react';
+import { supabase } from './services/supabase';
+import { Vehicle } from './types';
 
 export default function App() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>(MOCK_VEHICLES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchVehicles() {
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('cars')
+          .select('*')
+          .eq('status', 'available');
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setVehicles(data as Vehicle[]);
+        }
+      } catch (err) {
+        console.log('Supabase fetch failed or table missing, using mock data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchVehicles();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -49,11 +81,17 @@ export default function App() {
             </motion.p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {VEHICLES.map((vehicle, index) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} index={index} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-orange"></div>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {vehicles.map((vehicle, index) => (
+                <VehicleCard key={vehicle.id} vehicle={vehicle} index={index} />
+              ))}
+            </div>
+          )}
           
           <div className="mt-16 text-center">
             <button className="btn-secondary px-10">

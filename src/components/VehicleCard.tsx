@@ -19,8 +19,8 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, index }) => {
     >
       <div className="relative h-52 overflow-hidden">
         <img
-          src={vehicle.image}
-          alt={vehicle.name}
+          src={vehicle.preview_image_url}
+          alt={vehicle.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           referrerPolicy="no-referrer"
         />
@@ -34,12 +34,12 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, index }) => {
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-xl font-display font-bold text-brand-navy">{vehicle.name}</h3>
+            <h3 className="text-xl font-display font-bold text-brand-navy">{vehicle.title}</h3>
             <p className="text-sm text-gray-500">Modelo {vehicle.year}</p>
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-500">Desde</p>
-            <p className="text-2xl font-bold text-brand-orange">${vehicle.pricePerDay}<span className="text-sm text-gray-400 font-normal">/día</span></p>
+            <p className="text-2xl font-bold text-brand-orange">${vehicle.price_per_day}<span className="text-sm text-gray-400 font-normal">/día</span></p>
           </div>
         </div>
 
@@ -50,7 +50,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, index }) => {
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <Settings size={18} className="text-brand-orange" />
-            <span className="text-sm">{vehicle.transmission}</span>
+            <span className="text-sm capitalize">{vehicle.transmission}</span>
           </div>
         </div>
 

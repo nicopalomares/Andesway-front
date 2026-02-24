@@ -1,12 +1,13 @@
 export interface Vehicle {
   id: string;
-  name: string;
+  title: string;
   year: number;
-  category: 'SUV' | 'Sedan' | 'Económico' | 'Pick-up';
-  pricePerDay: number;
-  image: string;
-  transmission: 'Manual' | 'Automático';
+  category: 'suv' | 'offroad' | 'sedan' | 'economy';
+  price_per_day: number;
+  preview_image_url: string;
+  transmission: 'automatic' | 'manual';
   passengers: number;
+  status: 'available' | 'unavailable' | 'maintenance';
 }
 
 export interface Testimonial {
