@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import { Vehicle } from '../types';
-import { Plus, Trash2, Calendar, AlertCircle, CheckCircle2, Loader2, LogOut } from 'lucide-react';
+import { Vehicle, CarImage } from '../types';
+import { Plus, Trash2, Calendar as CalendarIcon, AlertCircle, CheckCircle2, Loader2, LogOut, X, Edit2, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import Calendar from '../components/Calendar';
+import { format } from 'date-fns';
 
 export default function Admin() {
   const [cars, setCars] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingCarId, setEditingCarId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
@@ -22,11 +25,16 @@ export default function Admin() {
     preview_image_url: '',
     transmission: 'automatic',
     passengers: 5,
-    status: 'available'
+    status: 'available',
+    description: ''
   });
 
   // Unavailability state
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
+  const [carUnavailabilities, setCarUnavailabilities] = useState<any[]>([]);
+  const [carImages, setCarImages] = useState<CarImage[]>([]);
+  const [showImagesModal, setShowImagesModal] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState('');
   const [unavailability, setUnavailability] = useState({
     start_date: '',
     end_date: '',
@@ -36,6 +44,13 @@ export default function Admin() {
   useEffect(() => {
     checkUser();
   }, []);
+
+  useEffect(() => {
+    if (selectedCarId) {
+      fetchUnavailabilities(selectedCarId);
+      fetchCarImages(selectedCarId);
+    }
+  }, [selectedCarId]);
 
   async function checkUser() {
     if (!supabase) {
@@ -50,6 +65,51 @@ export default function Admin() {
       setSession(session);
       fetchCars();
     }
+  }
+
+  async function fetchUnavailabilities(carId: string) {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from('car_unavailability')
+      .select('*')
+      .eq('car_id', carId);
+    
+    if (data) setCarUnavailabilities(data);
+  }
+
+  async function fetchCarImages(carId: string) {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from('car_images')
+      .select('*')
+      .eq('car_id', carId)
+      .order('display_order', { ascending: true });
+    
+    if (data) setCarImages(data as CarImage[]);
+  }
+
+  async function handleAddImage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase || !selectedCarId || !newImageUrl) return;
+
+    const { error } = await supabase.from('car_images').insert([{
+      car_id: selectedCarId,
+      image_url: newImageUrl,
+      display_order: carImages.length
+    }]);
+
+    if (error) {
+      setMessage({ type: 'error', text: 'Error al agregar imagen' });
+    } else {
+      setNewImageUrl('');
+      fetchCarImages(selectedCarId);
+    }
+  }
+
+  async function handleDeleteImage(imageId: string) {
+    if (!supabase || !selectedCarId) return;
+    const { error } = await supabase.from('car_images').delete().eq('id', imageId);
+    if (!error) fetchCarImages(selectedCarId);
   }
 
   async function handleLogout() {
@@ -70,24 +130,50 @@ export default function Admin() {
     e.preventDefault();
     if (!supabase) return;
 
-    const { error } = await supabase.from('cars').insert([newCar]);
-    if (error) {
-      setMessage({ type: 'error', text: 'Error al agregar vehículo: ' + error.message });
+    if (editingCarId) {
+      const { error } = await supabase.from('cars').update(newCar).eq('id', editingCarId);
+      if (error) {
+        setMessage({ type: 'error', text: 'Error al actualizar vehículo: ' + error.message });
+      } else {
+        setMessage({ type: 'success', text: 'Vehículo actualizado correctamente' });
+        setEditingCarId(null);
+        setIsAdding(false);
+        fetchCars();
+        resetForm();
+      }
     } else {
-      setMessage({ type: 'success', text: 'Vehículo agregado correctamente' });
-      setIsAdding(false);
-      fetchCars();
-      setNewCar({
-        title: '',
-        year: 2024,
-        category: 'economy',
-        price_per_day: 50,
-        preview_image_url: '',
-        transmission: 'automatic',
-        passengers: 5,
-        status: 'available'
-      });
+      const { error } = await supabase.from('cars').insert([newCar]);
+      if (error) {
+        setMessage({ type: 'error', text: 'Error al agregar vehículo: ' + error.message });
+      } else {
+        setMessage({ type: 'success', text: 'Vehículo agregado correctamente' });
+        setIsAdding(false);
+        fetchCars();
+        resetForm();
+      }
     }
+  }
+
+  function resetForm() {
+    setNewCar({
+      title: '',
+      year: 2024,
+      category: 'economy',
+      price_per_day: 50,
+      preview_image_url: '',
+      transmission: 'automatic',
+      passengers: 5,
+      status: 'available',
+      description: ''
+    });
+  }
+
+  function handleEditClick(car: Vehicle) {
+    const { id, created_at, updated_at, ...carData } = car as any;
+    setNewCar(carData);
+    setEditingCarId(id);
+    setIsAdding(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function handleUpdateStatus(id: string, status: Vehicle['status']) {
@@ -113,10 +199,18 @@ export default function Admin() {
       setMessage({ type: 'error', text: 'Error al registrar indisponibilidad' });
     } else {
       setMessage({ type: 'success', text: 'Indisponibilidad registrada' });
-      setSelectedCarId(null);
+      fetchUnavailabilities(selectedCarId);
       setUnavailability({ start_date: '', end_date: '', reason: '' });
     }
   }
+
+  const handleRangeSelect = (start: Date, end: Date) => {
+    setUnavailability({
+      ...unavailability,
+      start_date: format(start, 'yyyy-MM-dd'),
+      end_date: format(end, 'yyyy-MM-dd')
+    });
+  };
 
   return (
     <div className="pt-24 pb-12 bg-gray-50 min-h-screen">
@@ -154,7 +248,7 @@ export default function Admin() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white p-8 rounded-2xl card-shadow mb-12 border border-gray-100"
           >
-            <h2 className="text-xl font-bold mb-6">Agregar Nuevo Vehículo</h2>
+            <h2 className="text-xl font-bold mb-6">{editingCarId ? 'Editar Vehículo' : 'Agregar Nuevo Vehículo'}</h2>
             <form onSubmit={handleAddCar} className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
@@ -203,6 +297,16 @@ export default function Admin() {
                     <option value="offroad">Offroad / 4x4</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Descripción</label>
+                  <textarea 
+                    value={newCar.description}
+                    onChange={e => setNewCar({...newCar, description: e.target.value})}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="Descripción del vehículo..."
+                    rows={3}
+                  />
+                </div>
               </div>
               <div className="space-y-4">
                 <div>
@@ -237,10 +341,22 @@ export default function Admin() {
                     placeholder="https://images.unsplash.com/..."
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Estado</label>
+                  <select 
+                    value={newCar.status}
+                    onChange={e => setNewCar({...newCar, status: e.target.value as any})}
+                    className="w-full p-2 border rounded-lg"
+                  >
+                    <option value="available">Disponible</option>
+                    <option value="unavailable">No Disponible</option>
+                    <option value="maintenance">Mantenimiento</option>
+                  </select>
+                </div>
               </div>
               <div className="md:col-span-2 flex justify-end gap-4 mt-4">
-                <button type="button" onClick={() => setIsAdding(false)} className="px-6 py-2 text-gray-500 font-semibold">Cancelar</button>
-                <button type="submit" className="btn-primary px-8">Guardar Vehículo</button>
+                <button type="button" onClick={() => { setIsAdding(false); setEditingCarId(null); resetForm(); }} className="px-6 py-2 text-gray-500 font-semibold">Cancelar</button>
+                <button type="submit" className="btn-primary px-8">{editingCarId ? 'Actualizar Vehículo' : 'Guardar Vehículo'}</button>
               </div>
             </form>
           </motion.div>
@@ -298,11 +414,25 @@ export default function Admin() {
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => setSelectedCarId(car.id)}
+                          onClick={() => handleEditClick(car)}
+                          className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Editar Vehículo"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedCarId(car.id); setShowImagesModal(true); }}
+                          className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+                          title="Gestionar Galería"
+                        >
+                          <ImageIcon size={18} />
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedCarId(car.id); setShowImagesModal(false); }}
                           className="p-2 text-gray-400 hover:text-brand-orange transition-colors"
                           title="Gestionar Indisponibilidad"
                         >
-                          <Calendar size={18} />
+                          <CalendarIcon size={18} />
                         </button>
                       </div>
                     </td>
@@ -314,49 +444,159 @@ export default function Admin() {
         </div>
 
         {/* Unavailability Modal/Section */}
-        {selectedCarId && (
+        {selectedCarId && !showImagesModal && (
           <div className="fixed inset-0 bg-brand-navy/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white p-8 rounded-2xl max-w-md w-full card-shadow"
+              className="bg-white p-8 rounded-2xl max-w-4xl w-full card-shadow overflow-hidden flex flex-col md:flex-row gap-8"
             >
-              <h3 className="text-xl font-bold mb-6">Registrar Indisponibilidad</h3>
-              <form onSubmit={handleAddUnavailability} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Fecha Inicio</label>
-                  <input 
-                    required
-                    type="date" 
-                    value={unavailability.start_date}
-                    onChange={e => setUnavailability({...unavailability, start_date: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                  />
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-brand-navy">Calendario de Disponibilidad</h3>
+                  <button onClick={() => setSelectedCarId(null)} className="md:hidden text-gray-400 hover:text-gray-600">
+                    <X size={24} />
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Fecha Fin</label>
-                  <input 
-                    required
-                    type="date" 
-                    value={unavailability.end_date}
-                    onChange={e => setUnavailability({...unavailability, end_date: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                  />
+                <Calendar 
+                  carId={selectedCarId} 
+                  unavailabilities={carUnavailabilities}
+                  onSelectRange={handleRangeSelect}
+                />
+              </div>
+
+              <div className="w-full md:w-80 flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-brand-navy">Registrar Rango</h3>
+                  <button onClick={() => setSelectedCarId(null)} className="hidden md:block text-gray-400 hover:text-gray-600">
+                    <X size={24} />
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Motivo (Opcional)</label>
-                  <textarea 
-                    value={unavailability.reason}
-                    onChange={e => setUnavailability({...unavailability, reason: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="Ej: Reserva confirmada"
-                  />
-                </div>
-                <div className="flex justify-end gap-4 mt-6">
-                  <button type="button" onClick={() => setSelectedCarId(null)} className="px-4 py-2 text-gray-500 font-semibold">Cerrar</button>
-                  <button type="submit" className="btn-primary px-6">Registrar</button>
-                </div>
+                
+                <form onSubmit={handleAddUnavailability} className="space-y-4 flex-grow">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Desde</label>
+                      <input 
+                        required
+                        readOnly
+                        type="date" 
+                        value={unavailability.start_date}
+                        className="w-full p-2 border rounded-lg bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Hasta</label>
+                      <input 
+                        required
+                        readOnly
+                        type="date" 
+                        value={unavailability.end_date}
+                        className="w-full p-2 border rounded-lg bg-gray-50"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Motivo (Opcional)</label>
+                    <textarea 
+                      value={unavailability.reason}
+                      onChange={e => setUnavailability({...unavailability, reason: e.target.value})}
+                      className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange outline-none"
+                      placeholder="Ej: Mantenimiento preventivo"
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex gap-3">
+                    <AlertCircle className="text-blue-500 shrink-0" size={18} />
+                    <p className="text-xs text-blue-700">
+                      Seleccioná las fechas directamente en el calendario para definir el rango.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3 mt-auto pt-6">
+                    <button 
+                      type="submit" 
+                      disabled={!unavailability.start_date || !unavailability.end_date}
+                      className="btn-primary w-full py-3 disabled:opacity-50"
+                    >
+                      Guardar Rango
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedCarId(null)} 
+                      className="w-full py-2 text-gray-500 font-semibold text-sm"
+                    >
+                      Cerrar Panel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        {/* Images Gallery Modal */}
+        {selectedCarId && showImagesModal && (
+          <div className="fixed inset-0 bg-brand-navy/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white p-8 rounded-2xl max-w-2xl w-full card-shadow"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-brand-navy">Galería de Imágenes</h3>
+                <button onClick={() => { setSelectedCarId(null); setShowImagesModal(false); }} className="text-gray-400 hover:text-gray-600">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddImage} className="mb-8 flex gap-2">
+                <input 
+                  required
+                  type="url" 
+                  value={newImageUrl}
+                  onChange={e => setNewImageUrl(e.target.value)}
+                  className="flex-grow p-2 border rounded-lg"
+                  placeholder="URL de la imagen (Unsplash, etc.)"
+                />
+                <button type="submit" className="btn-primary px-4 py-2 flex items-center gap-2">
+                  <Plus size={18} />
+                  Agregar
+                </button>
               </form>
+
+              <div className="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto p-1">
+                {carImages.map((img) => (
+                  <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-100">
+                    <img 
+                      src={img.image_url} 
+                      alt="Gallery" 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <button 
+                      onClick={() => handleDeleteImage(img.id)}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                {carImages.length === 0 && (
+                  <div className="col-span-3 py-12 text-center text-gray-400">
+                    No hay imágenes adicionales en la galería.
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 flex justify-end">
+                <button 
+                  onClick={() => { setSelectedCarId(null); setShowImagesModal(false); }} 
+                  className="px-6 py-2 text-gray-500 font-semibold"
+                >
+                  Cerrar
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

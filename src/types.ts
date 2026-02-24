@@ -8,6 +8,14 @@ export interface Vehicle {
   transmission: 'automatic' | 'manual';
   passengers: number;
   status: 'available' | 'unavailable' | 'maintenance';
+  description?: string;
+}
+
+export interface CarImage {
+  id: string;
+  car_id: string;
+  image_url: string;
+  display_order: number;
 }
 
 export interface Testimonial {

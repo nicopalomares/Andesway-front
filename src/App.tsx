@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
+import VehicleDetail from './pages/VehicleDetail';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/vehiculo/:id" element={<VehicleDetail />} />
         </Routes>
 
         <Footer />

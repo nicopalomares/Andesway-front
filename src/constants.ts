@@ -10,7 +10,8 @@ export const VEHICLES: Vehicle[] = [
     preview_image_url: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=800',
     transmission: 'manual',
     passengers: 5,
-    status: 'available'
+    status: 'available',
+    description: 'La pick-up más confiable para recorrer los caminos más exigentes de la Patagonia.'
   },
   {
     id: '2',
@@ -21,7 +22,8 @@ export const VEHICLES: Vehicle[] = [
     preview_image_url: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&q=80&w=800',
     transmission: 'automatic',
     passengers: 5,
-    status: 'available'
+    status: 'available',
+    description: 'Confort y tecnología alemana para tus viajes en familia.'
   },
   {
     id: '3',
@@ -32,7 +34,8 @@ export const VEHICLES: Vehicle[] = [
     preview_image_url: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&q=80&w=800',
     transmission: 'manual',
     passengers: 5,
-    status: 'available'
+    status: 'available',
+    description: 'Ágil y económico, ideal para moverte por la ciudad.'
   },
   {
     id: '4',
@@ -43,7 +46,8 @@ export const VEHICLES: Vehicle[] = [
     preview_image_url: 'https://images.unsplash.com/photo-1623860841535-10a44c3f5218?auto=format&fit=crop&q=80&w=800',
     transmission: 'automatic',
     passengers: 5,
-    status: 'available'
+    status: 'available',
+    description: 'Elegancia y suavidad de marcha en un sedán de referencia.'
   }
 ];
 
