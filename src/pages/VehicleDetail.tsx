@@ -71,7 +71,7 @@ export default function VehicleDetail() {
     );
   }
 
-  const whatsappNumber = "5491123456789"; // Replace with real number
+  const whatsappNumber = "+5492612459885"; // Replace with real number
   const whatsappMessage = encodeURIComponent(`Hola Andes Way! Me gustaría consultar por el vehículo: ${vehicle.title} (Modelo ${vehicle.year}).`);
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 

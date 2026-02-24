@@ -116,7 +116,6 @@ export default function Admin() {
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileExt = file.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}-${file.name}`;
         const filePath = `car-images/${selectedCarId}/${fileName}`;
 
@@ -188,21 +187,34 @@ export default function Admin() {
         setMessage({ type: 'error', text: 'Error al actualizar vehículo: ' + error.message });
       } else {
         setMessage({ type: 'success', text: 'Vehículo actualizado correctamente' });
-        setEditingCarId(null);
-        setIsAdding(false);
         fetchCars();
-        resetForm();
       }
     } else {
-      const { error } = await supabase.from('cars').insert([newCar]);
+      const { data, error } = await supabase.from('cars').insert([newCar]).select();
       if (error) {
         setMessage({ type: 'error', text: 'Error al agregar vehículo: ' + error.message });
       } else {
-        setMessage({ type: 'success', text: 'Vehículo agregado correctamente' });
-        setIsAdding(false);
+        setMessage({ type: 'success', text: 'Vehículo creado. Ahora podés subir imágenes.' });
+        if (data && data[0]) {
+          const savedCar = data[0] as Vehicle;
+          setEditingCarId(savedCar.id);
+          setSelectedCarId(savedCar.id);
+        }
         fetchCars();
-        resetForm();
       }
+    }
+  }
+
+  async function handleSetPreviewImage(url: string) {
+    if (!supabase || !editingCarId) return;
+    
+    const { error } = await supabase.from('cars').update({ preview_image_url: url }).eq('id', editingCarId);
+    if (error) {
+      setMessage({ type: 'error', text: 'Error al actualizar imagen principal' });
+    } else {
+      setNewCar(prev => ({ ...prev, preview_image_url: url }));
+      setMessage({ type: 'success', text: 'Imagen principal actualizada' });
+      fetchCars();
     }
   }
 
@@ -221,9 +233,10 @@ export default function Admin() {
   }
 
   function handleEditClick(car: Vehicle) {
-    const { id, created_at, updated_at, ...carData } = car as any;
+    const { id, created_at, updated_at, car_images, ...carData } = car as any;
     setNewCar(carData);
     setEditingCarId(id);
+    setSelectedCarId(id);
     setIsAdding(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -301,116 +314,210 @@ export default function Admin() {
             className="bg-white p-8 rounded-2xl card-shadow mb-12 border border-gray-100"
           >
             <h2 className="text-xl font-bold mb-6">{editingCarId ? 'Editar Vehículo' : 'Agregar Nuevo Vehículo'}</h2>
-            <form onSubmit={handleAddCar} className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Título / Nombre</label>
-                  <input 
-                    required
-                    type="text" 
-                    value={newCar.title || ''}
-                    onChange={e => setNewCar({...newCar, title: e.target.value})}
-                    className="w-full p-2 border rounded-lg" 
-                    placeholder="Ej: Toyota Hilux 4x4"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+            <div className="grid lg:grid-cols-3 gap-12">
+              <form onSubmit={handleAddCar} className="lg:col-span-2 grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-1">Año</label>
+                    <label className="block text-sm font-semibold mb-1">Título / Nombre</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={newCar.title || ''}
+                      onChange={e => setNewCar({...newCar, title: e.target.value})}
+                      className="w-full p-2 border rounded-lg" 
+                      placeholder="Ej: Toyota Hilux 4x4"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Año</label>
+                      <input 
+                        required
+                        type="number" 
+                        value={newCar.year}
+                        onChange={e => setNewCar({...newCar, year: parseInt(e.target.value)})}
+                        className="w-full p-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Pasajeros</label>
+                      <input 
+                        required
+                        type="number" 
+                        value={newCar.passengers}
+                        onChange={e => setNewCar({...newCar, passengers: parseInt(e.target.value)})}
+                        className="w-full p-2 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Categoría</label>
+                    <select 
+                      value={newCar.category}
+                      onChange={e => setNewCar({...newCar, category: e.target.value as any})}
+                      className="w-full p-2 border rounded-lg"
+                    >
+                      <option value="economy">Económico</option>
+                      <option value="sedan">Sedán</option>
+                      <option value="suv">SUV</option>
+                      <option value="offroad">Offroad / 4x4</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Descripción</label>
+                    <textarea 
+                      value={newCar.description || ''}
+                      onChange={e => setNewCar({...newCar, description: e.target.value})}
+                      className="w-full p-2 border rounded-lg"
+                      placeholder="Descripción del vehículo..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Precio por día (USD)</label>
                     <input 
                       required
                       type="number" 
-                      value={newCar.year}
-                      onChange={e => setNewCar({...newCar, year: parseInt(e.target.value)})}
+                      value={newCar.price_per_day}
+                      onChange={e => setNewCar({...newCar, price_per_day: parseFloat(e.target.value)})}
                       className="w-full p-2 border rounded-lg"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-1">Pasajeros</label>
-                    <input 
-                      required
-                      type="number" 
-                      value={newCar.passengers}
-                      onChange={e => setNewCar({...newCar, passengers: parseInt(e.target.value)})}
+                    <label className="block text-sm font-semibold mb-1">Transmisión</label>
+                    <select 
+                      value={newCar.transmission}
+                      onChange={e => setNewCar({...newCar, transmission: e.target.value as any})}
                       className="w-full p-2 border rounded-lg"
-                    />
+                    >
+                      <option value="automatic">Automático</option>
+                      <option value="manual">Manual</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">URL Imagen Preview (Principal)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        required
+                        type="url" 
+                        value={newCar.preview_image_url || ''}
+                        onChange={e => setNewCar({...newCar, preview_image_url: e.target.value})}
+                        className="flex-grow p-2 border rounded-lg"
+                        placeholder="https://images.unsplash.com/..."
+                      />
+                      {newCar.preview_image_url && (
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border shrink-0">
+                          <img src={newCar.preview_image_url} className="w-full h-full object-cover" alt="" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Estado</label>
+                    <select 
+                      value={newCar.status}
+                      onChange={e => setNewCar({...newCar, status: e.target.value as any})}
+                      className="w-full p-2 border rounded-lg"
+                    >
+                      <option value="available">Disponible</option>
+                      <option value="unavailable">No Disponible</option>
+                      <option value="maintenance">Mantenimiento</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-4 pt-4">
+                    <button type="button" onClick={() => { setIsAdding(false); setEditingCarId(null); setSelectedCarId(null); resetForm(); }} className="px-6 py-2 text-gray-500 font-semibold">Cerrar</button>
+                    <button type="submit" className="btn-primary px-8">{editingCarId ? 'Actualizar Datos' : 'Crear Vehículo'}</button>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Categoría</label>
-                  <select 
-                    value={newCar.category}
-                    onChange={e => setNewCar({...newCar, category: e.target.value as any})}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="economy">Económico</option>
-                    <option value="sedan">Sedán</option>
-                    <option value="suv">SUV</option>
-                    <option value="offroad">Offroad / 4x4</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Descripción</label>
-                  <textarea 
-                    value={newCar.description || ''}
-                    onChange={e => setNewCar({...newCar, description: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="Descripción del vehículo..."
-                    rows={3}
-                  />
-                </div>
+              </form>
+
+              {/* Image Management Section */}
+              <div className="border-l border-gray-100 pl-8">
+                <h3 className="text-lg font-bold text-brand-navy mb-4 flex items-center gap-2">
+                  <ImageIcon size={20} className="text-brand-orange" />
+                  Galería de Imágenes
+                </h3>
+                
+                {!editingCarId ? (
+                  <div className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200 text-center">
+                    <AlertCircle className="mx-auto text-gray-400 mb-2" size={24} />
+                    <p className="text-sm text-gray-500">
+                      Guardá el vehículo primero para poder gestionar su galería de imágenes.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="relative">
+                      <input 
+                        type="file" 
+                        multiple
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        disabled={uploading}
+                        className="hidden"
+                        id="file-upload-form"
+                      />
+                      <label 
+                        htmlFor="file-upload-form"
+                        className={`w-full flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+                      >
+                        {uploading ? (
+                          <Loader2 className="animate-spin text-brand-orange" size={24} />
+                        ) : (
+                          <Plus className="text-gray-400" size={24} />
+                        )}
+                        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          {uploading ? 'Subiendo...' : 'Subir Fotos'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2">
+                      {carImages.map((img) => (
+                        <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+                          <img 
+                            src={img.image_url} 
+                            alt="Gallery" 
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                            <button 
+                              onClick={() => handleSetPreviewImage(img.image_url)}
+                              className={`w-full py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors ${
+                                newCar.preview_image_url === img.image_url 
+                                ? 'bg-green-500 text-white' 
+                                : 'bg-white text-brand-navy hover:bg-brand-orange hover:text-white'
+                              }`}
+                            >
+                              {newCar.preview_image_url === img.image_url ? 'Principal' : 'Usar como principal'}
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteImage(img.id)}
+                              className="w-full py-1.5 bg-red-500 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-red-600 transition-colors"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                          {newCar.preview_image_url === img.image_url && (
+                            <div className="absolute top-2 left-2 bg-green-500 text-white p-1 rounded-md shadow-lg">
+                              <CheckCircle2 size={12} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {carImages.length === 0 && !uploading && (
+                        <div className="col-span-2 py-8 text-center text-gray-400 text-sm italic">
+                          Sin imágenes adicionales
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Precio por día (USD)</label>
-                  <input 
-                    required
-                    type="number" 
-                    value={newCar.price_per_day}
-                    onChange={e => setNewCar({...newCar, price_per_day: parseFloat(e.target.value)})}
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Transmisión</label>
-                  <select 
-                    value={newCar.transmission}
-                    onChange={e => setNewCar({...newCar, transmission: e.target.value as any})}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="automatic">Automático</option>
-                    <option value="manual">Manual</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">URL Imagen Preview</label>
-                  <input 
-                    required
-                    type="url" 
-                    value={newCar.preview_image_url || ''}
-                    onChange={e => setNewCar({...newCar, preview_image_url: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="https://images.unsplash.com/..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Estado</label>
-                  <select 
-                    value={newCar.status}
-                    onChange={e => setNewCar({...newCar, status: e.target.value as any})}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="available">Disponible</option>
-                    <option value="unavailable">No Disponible</option>
-                    <option value="maintenance">Mantenimiento</option>
-                  </select>
-                </div>
-              </div>
-              <div className="md:col-span-2 flex justify-end gap-4 mt-4">
-                <button type="button" onClick={() => { setIsAdding(false); setEditingCarId(null); resetForm(); }} className="px-6 py-2 text-gray-500 font-semibold">Cancelar</button>
-                <button type="submit" className="btn-primary px-8">{editingCarId ? 'Actualizar Vehículo' : 'Guardar Vehículo'}</button>
-              </div>
-            </form>
+            </div>
           </motion.div>
         )}
 
@@ -468,16 +575,9 @@ export default function Admin() {
                         <button 
                           onClick={() => handleEditClick(car)}
                           className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
-                          title="Editar Vehículo"
+                          title="Editar Vehículo y Galería"
                         >
                           <Edit2 size={18} />
-                        </button>
-                        <button 
-                          onClick={() => { setSelectedCarId(car.id); setShowImagesModal(true); }}
-                          className="p-2 text-gray-400 hover:text-green-500 transition-colors"
-                          title="Gestionar Galería"
-                        >
-                          <ImageIcon size={18} />
                         </button>
                         <button 
                           onClick={() => { setSelectedCarId(car.id); setShowImagesModal(false); }}
@@ -583,97 +683,6 @@ export default function Admin() {
                     </button>
                   </div>
                 </form>
-              </div>
-            </motion.div>
-          </div>
-        )}
-        {/* Images Gallery Modal */}
-        {selectedCarId && showImagesModal && (
-          <div className="fixed inset-0 bg-brand-navy/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-white p-8 rounded-2xl max-w-2xl w-full card-shadow"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-brand-navy">Galería de Imágenes</h3>
-                <button onClick={() => { setSelectedCarId(null); setShowImagesModal(false); }} className="text-gray-400 hover:text-gray-600">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-4 mb-8">
-                <form onSubmit={handleAddImage} className="flex gap-2">
-                  <input 
-                    type="url" 
-                    value={newImageUrl}
-                    onChange={e => setNewImageUrl(e.target.value)}
-                    className="flex-grow p-2 border rounded-lg text-sm"
-                    placeholder="URL de la imagen (opcional)"
-                  />
-                  <button type="submit" className="btn-primary px-4 py-2 flex items-center gap-2 text-sm">
-                    <Plus size={18} />
-                    URL
-                  </button>
-                </form>
-
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label 
-                    htmlFor="file-upload"
-                    className={`w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
-                  >
-                    {uploading ? (
-                      <Loader2 className="animate-spin text-brand-orange" size={24} />
-                    ) : (
-                      <ImageIcon className="text-gray-400" size={24} />
-                    )}
-                    <span className="font-semibold text-gray-600">
-                      {uploading ? 'Subiendo imágenes...' : 'Subir imágenes desde el equipo'}
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto p-1">
-                {carImages.map((img) => (
-                  <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-100">
-                    <img 
-                      src={img.image_url} 
-                      alt="Gallery" 
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    <button 
-                      onClick={() => handleDeleteImage(img.id)}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-                {carImages.length === 0 && (
-                  <div className="col-span-3 py-12 text-center text-gray-400">
-                    No hay imágenes adicionales en la galería.
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-8 flex justify-end">
-                <button 
-                  onClick={() => { setSelectedCarId(null); setShowImagesModal(false); }} 
-                  className="px-6 py-2 text-gray-500 font-semibold"
-                >
-                  Cerrar
-                </button>
               </div>
             </motion.div>
           </div>
