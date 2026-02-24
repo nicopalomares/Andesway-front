@@ -9,7 +9,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [session, setSession] = useState<any>(null);
   const location = useLocation();
-  const isAdminPage = location.pathname === '/admin';
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,11 +44,11 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled || isAdminPage ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'}`}>
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled || !isHomePage ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className={`text-2xl font-display font-bold tracking-tight ${scrolled || isAdminPage ? 'text-brand-navy' : 'text-white'}`}>
+            <Link to="/" className={`text-2xl font-display font-bold tracking-tight ${scrolled || !isHomePage ? 'text-brand-navy' : 'text-white'}`}>
               ANDES <span className="text-brand-orange">WAY</span>
             </Link>
           </div>
@@ -60,21 +60,17 @@ export default function Navbar() {
                   key={link.name}
                   to={link.href}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    scrolled || isAdminPage ? 'text-brand-navy hover:text-brand-orange' : 'text-white hover:text-brand-orange'
+                    scrolled || !isHomePage ? 'text-brand-navy hover:text-brand-orange' : 'text-white hover:text-brand-orange'
                   }`}
                 >
                   {link.name}
                 </Link>
               ))}
-              {session ? (
-                <Link to="/admin" className={`p-2 rounded-full transition-colors ${scrolled || isAdminPage ? 'text-brand-navy hover:text-brand-orange' : 'text-white hover:text-brand-orange'}`} title="Admin Panel">
+              {session && (
+                <Link to="/admin" className={`p-2 rounded-full transition-colors ${scrolled || !isHomePage ? 'text-brand-navy hover:text-brand-orange' : 'text-white hover:text-brand-orange'}`} title="Admin Panel">
                   <LayoutDashboard size={20} />
                 </Link>
-              ) : (
-                <Link to="/login" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${scrolled || isAdminPage ? 'text-brand-navy hover:text-brand-orange' : 'text-white hover:text-brand-orange'}`}>
-                  Login
-                </Link>
-              )}
+              ) }
               <button className="btn-primary py-2 px-5 text-sm">
                 Reservar
               </button>
@@ -83,18 +79,18 @@ export default function Navbar() {
 
           <div className="md:hidden flex items-center gap-4">
             {session ? (
-              <Link to="/admin" className={`${scrolled || isAdminPage ? 'text-brand-navy' : 'text-white'}`}>
+              <Link to="/admin" className={`${scrolled || !isHomePage ? 'text-brand-navy' : 'text-white'}`}>
                 <LayoutDashboard size={20} />
               </Link>
             ) : (
-              <Link to="/login" className={`${scrolled || isAdminPage ? 'text-brand-navy' : 'text-white'}`}>
+              <Link to="/login" className={`${scrolled || !isHomePage ? 'text-brand-navy' : 'text-white'}`}>
                 <LogIn size={20} />
               </Link>
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`inline-flex items-center justify-center p-2 rounded-md ${
-                scrolled || isAdminPage ? 'text-brand-navy' : 'text-white'
+                scrolled || !isHomePage ? 'text-brand-navy' : 'text-white'
               } hover:text-brand-orange focus:outline-none`}
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
