@@ -23,7 +23,7 @@ export default function Home() {
       try {
         const { data, error } = await supabase
           .from('cars')
-          .select('*')
+          .select('*, car_images(*)')
           .eq('status', 'available');
         
         if (error) throw error;

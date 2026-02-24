@@ -9,6 +9,7 @@ export interface Vehicle {
   passengers: number;
   status: 'available' | 'unavailable' | 'maintenance';
   description?: string;
+  car_images?: CarImage[];
 }
 
 export interface CarImage {

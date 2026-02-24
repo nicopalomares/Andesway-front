@@ -29,26 +29,20 @@ export default function VehicleDetail() {
       
       setLoading(true);
       try {
-        // Fetch vehicle details
+        // Fetch vehicle details with images joined
         const { data: carData, error: carError } = await supabase
           .from('cars')
-          .select('*')
+          .select('*, car_images(*)')
           .eq('id', id)
           .single();
         
         if (carError) throw carError;
-        setVehicle(carData as Vehicle);
-        setActiveImage(carData.preview_image_url);
-
-        // Fetch additional images
-        const { data: imageData, error: imageError } = await supabase
-          .from('car_images')
-          .select('*')
-          .eq('car_id', id)
-          .order('display_order', { ascending: true });
-        
-        if (imageError) throw imageError;
-        setImages(imageData as CarImage[]);
+        const vehicleData = carData as Vehicle;
+        setVehicle(vehicleData);
+        setActiveImage(vehicleData.preview_image_url);
+        if (vehicleData.car_images) {
+          setImages(vehicleData.car_images);
+        }
       } catch (err) {
         console.error('Error fetching vehicle details:', err);
       } finally {

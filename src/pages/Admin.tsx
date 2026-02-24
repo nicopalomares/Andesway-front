@@ -35,6 +35,7 @@ export default function Admin() {
   const [carImages, setCarImages] = useState<CarImage[]>([]);
   const [showImagesModal, setShowImagesModal] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [unavailability, setUnavailability] = useState({
     start_date: '',
     end_date: '',
@@ -103,6 +104,53 @@ export default function Admin() {
     } else {
       setNewImageUrl('');
       fetchCarImages(selectedCarId);
+      fetchCars(); // Refresh cars to update joined data
+    }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!supabase || !selectedCarId || !files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}-${file.name}`;
+        const filePath = `car-images/${selectedCarId}/${fileName}`;
+
+        // 1. Upload to Storage
+        const { error: uploadError } = await supabase.storage
+          .from('car-images')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // 2. Get Public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('car-images')
+          .getPublicUrl(filePath);
+
+        // 3. Insert into car_images table
+        const { error: dbError } = await supabase.from('car_images').insert([{
+          car_id: selectedCarId,
+          image_url: publicUrl,
+          display_order: carImages.length + i
+        }]);
+
+        if (dbError) throw dbError;
+      }
+
+      setMessage({ type: 'success', text: 'Imágenes subidas correctamente' });
+      fetchCarImages(selectedCarId);
+      fetchCars();
+    } catch (error: any) {
+      setMessage({ type: 'error', text: 'Error al subir imágenes: ' + error.message });
+    } finally {
+      setUploading(false);
+      // Clear input
+      e.target.value = '';
     }
   }
 
@@ -121,7 +169,11 @@ export default function Admin() {
   async function fetchCars() {
     if (!supabase) return;
     setLoading(true);
-    const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('cars')
+      .select('*, car_images(*)')
+      .order('created_at', { ascending: false });
+    
     if (data) setCars(data as Vehicle[]);
     setLoading(false);
   }
@@ -256,7 +308,7 @@ export default function Admin() {
                   <input 
                     required
                     type="text" 
-                    value={newCar.title}
+                    value={newCar.title || ''}
                     onChange={e => setNewCar({...newCar, title: e.target.value})}
                     className="w-full p-2 border rounded-lg" 
                     placeholder="Ej: Toyota Hilux 4x4"
@@ -300,7 +352,7 @@ export default function Admin() {
                 <div>
                   <label className="block text-sm font-semibold mb-1">Descripción</label>
                   <textarea 
-                    value={newCar.description}
+                    value={newCar.description || ''}
                     onChange={e => setNewCar({...newCar, description: e.target.value})}
                     className="w-full p-2 border rounded-lg"
                     placeholder="Descripción del vehículo..."
@@ -335,7 +387,7 @@ export default function Admin() {
                   <input 
                     required
                     type="url" 
-                    value={newCar.preview_image_url}
+                    value={newCar.preview_image_url || ''}
                     onChange={e => setNewCar({...newCar, preview_image_url: e.target.value})}
                     className="w-full p-2 border rounded-lg"
                     placeholder="https://images.unsplash.com/..."
@@ -481,7 +533,7 @@ export default function Admin() {
                         required
                         readOnly
                         type="date" 
-                        value={unavailability.start_date}
+                        value={unavailability.start_date || ''}
                         className="w-full p-2 border rounded-lg bg-gray-50"
                       />
                     </div>
@@ -491,7 +543,7 @@ export default function Admin() {
                         required
                         readOnly
                         type="date" 
-                        value={unavailability.end_date}
+                        value={unavailability.end_date || ''}
                         className="w-full p-2 border rounded-lg bg-gray-50"
                       />
                     </div>
@@ -499,7 +551,7 @@ export default function Admin() {
                   <div>
                     <label className="block text-sm font-semibold mb-1">Motivo (Opcional)</label>
                     <textarea 
-                      value={unavailability.reason}
+                      value={unavailability.reason || ''}
                       onChange={e => setUnavailability({...unavailability, reason: e.target.value})}
                       className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange outline-none"
                       placeholder="Ej: Mantenimiento preventivo"
@@ -550,20 +602,46 @@ export default function Admin() {
                 </button>
               </div>
 
-              <form onSubmit={handleAddImage} className="mb-8 flex gap-2">
-                <input 
-                  required
-                  type="url" 
-                  value={newImageUrl}
-                  onChange={e => setNewImageUrl(e.target.value)}
-                  className="flex-grow p-2 border rounded-lg"
-                  placeholder="URL de la imagen (Unsplash, etc.)"
-                />
-                <button type="submit" className="btn-primary px-4 py-2 flex items-center gap-2">
-                  <Plus size={18} />
-                  Agregar
-                </button>
-              </form>
+              <div className="flex flex-col gap-4 mb-8">
+                <form onSubmit={handleAddImage} className="flex gap-2">
+                  <input 
+                    type="url" 
+                    value={newImageUrl}
+                    onChange={e => setNewImageUrl(e.target.value)}
+                    className="flex-grow p-2 border rounded-lg text-sm"
+                    placeholder="URL de la imagen (opcional)"
+                  />
+                  <button type="submit" className="btn-primary px-4 py-2 flex items-center gap-2 text-sm">
+                    <Plus size={18} />
+                    URL
+                  </button>
+                </form>
+
+                <div className="relative">
+                  <input 
+                    type="file" 
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label 
+                    htmlFor="file-upload"
+                    className={`w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-brand-orange hover:bg-brand-orange/5 transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
+                    {uploading ? (
+                      <Loader2 className="animate-spin text-brand-orange" size={24} />
+                    ) : (
+                      <ImageIcon className="text-gray-400" size={24} />
+                    )}
+                    <span className="font-semibold text-gray-600">
+                      {uploading ? 'Subiendo imágenes...' : 'Subir imágenes desde el equipo'}
+                    </span>
+                  </label>
+                </div>
+              </div>
 
               <div className="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto p-1">
                 {carImages.map((img) => (
