@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  format, 
-  addMonths, 
-  subMonths, 
-  startOfMonth, 
-  endOfMonth, 
-  startOfWeek, 
-  endOfWeek, 
-  isSameMonth, 
-  isSameDay, 
-  addDays, 
+import React, {useState} from "react";
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  isSameDay,
+  addDays,
   isWithinInterval,
   parseISO,
-  eachDayOfInterval
-} from 'date-fns';
-import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+} from "date-fns";
+import {es} from "date-fns/locale";
+import {ChevronLeft, ChevronRight} from "lucide-react";
 
 interface Unavailability {
   id: string;
@@ -27,43 +26,51 @@ interface Unavailability {
 interface CalendarProps {
   carId: string;
   unavailabilities: Unavailability[];
-  onSelectRange?: (start: Date, end: Date) => void;
+  onSelectRange: (start: Date, end: Date) => void;
+  onDeleteRange: (id: string) => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ carId, unavailabilities, onSelectRange }) => {
+const Calendar: React.FC<CalendarProps> = ({
+  carId,
+  unavailabilities,
+  onSelectRange,
+  onDeleteRange,
+}) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedRange, setSelectedRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null });
+  const [selectingStart, setSelectingStart] = useState<Date | null>(null);
+  const [selectingEnd, setSelectingEnd] = useState<Date | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Unavailability | null>(
+    null,
+  );
 
-  const renderHeader = () => {
-    return (
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-brand-navy capitalize">
-          {format(currentMonth, 'MMMM yyyy', { locale: es })}
-        </h3>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
+  const renderHeader = () => (
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="text-lg font-bold text-brand-navy capitalize">
+        {format(currentMonth, "MMMM yyyy", {locale: es})}
+      </h3>
+      <div className="flex gap-2">
+        <button
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <ChevronLeft size={20} />
+        </button>
+        <button
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <ChevronRight size={20} />
+        </button>
       </div>
-    );
-  };
+    </div>
+  );
 
   const renderDays = () => {
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const days = ["Dom", "Lun", "Mar", "Mi\u00e9", "Jue", "Vie", "S\u00e1b"];
     return (
       <div className="grid grid-cols-7 mb-2">
         {days.map((day) => (
-          <div key={day} className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+          <div
+            key={day}
+            className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
             {day}
           </div>
         ))}
@@ -78,66 +85,147 @@ const Calendar: React.FC<CalendarProps> = ({ carId, unavailabilities, onSelectRa
     const endDate = endOfWeek(monthEnd);
 
     const rows = [];
-    let days = [];
+    let days: React.ReactNode[] = [];
     let day = startDate;
-    let formattedDate = "";
 
     while (day <= endDate) {
       for (let i = 0; i < 7; i++) {
-        formattedDate = format(day, 'd');
         const cloneDay = day;
-        
-        // Check if day is unavailable
-        const unavailability = unavailabilities.find(u => 
+        const formattedDate = format(day, "d");
+        const isOutsideMonth = !isSameMonth(day, monthStart);
+
+        const savedRange = unavailabilities.find((u) =>
           isWithinInterval(cloneDay, {
             start: parseISO(u.start_date),
-            end: parseISO(u.end_date)
-          })
+            end: parseISO(u.end_date),
+          }),
         );
 
-        const isSelected = selectedRange.start && isSameDay(day, selectedRange.start) || 
-                          (selectedRange.start && selectedRange.end && isWithinInterval(day, { start: selectedRange.start, end: selectedRange.end }));
+        const isPendingDeleteDay =
+          pendingDelete &&
+          isWithinInterval(cloneDay, {
+            start: parseISO(pendingDelete.start_date),
+            end: parseISO(pendingDelete.end_date),
+          });
+
+        const isSelectingThisDay =
+          selectingStart && isSameDay(cloneDay, selectingStart);
+
+        const pendingStart =
+          selectingStart && selectingEnd
+            ? selectingStart < selectingEnd
+              ? selectingStart
+              : selectingEnd
+            : null;
+        const pendingEnd =
+          selectingStart && selectingEnd
+            ? selectingStart < selectingEnd
+              ? selectingEnd
+              : selectingStart
+            : null;
+
+        const isInPendingRange =
+          pendingStart &&
+          pendingEnd &&
+          isWithinInterval(cloneDay, {start: pendingStart, end: pendingEnd});
+
+        const isPendingStart =
+          pendingStart && isSameDay(cloneDay, pendingStart);
+        const isPendingEnd = pendingEnd && isSameDay(cloneDay, pendingEnd);
+
+        let cellClass =
+          "relative h-12 flex items-center justify-center transition-all border border-transparent ";
+
+        if (isOutsideMonth) {
+          cellClass += "text-gray-300 pointer-events-none";
+        } else if (isPendingDeleteDay) {
+          cellClass += "bg-red-300 text-red-800 font-bold cursor-pointer";
+        } else if (savedRange) {
+          cellClass +=
+            "bg-red-100 text-red-600 font-bold hover:bg-red-200 cursor-pointer";
+        } else if (isPendingStart || isPendingEnd) {
+          cellClass +=
+            "bg-brand-orange text-white font-bold rounded-lg cursor-pointer";
+        } else if (isInPendingRange) {
+          cellClass +=
+            "bg-brand-orange/20 text-brand-orange font-semibold cursor-pointer";
+        } else if (isSelectingThisDay) {
+          cellClass +=
+            "bg-brand-orange text-white font-bold animate-pulse rounded-lg cursor-pointer";
+        } else {
+          cellClass += "text-gray-700 hover:bg-brand-orange/10 cursor-pointer";
+        }
 
         days.push(
           <div
             key={day.toString()}
-            className={`relative h-12 flex items-center justify-center cursor-pointer transition-all border border-transparent
-              ${!isSameMonth(day, monthStart) ? 'text-gray-300' : 'text-gray-700'}
-              ${unavailability ? 'bg-red-50 text-red-600 font-bold' : 'hover:bg-brand-orange/10'}
-              ${isSelected ? 'bg-brand-orange text-white font-bold rounded-lg' : ''}
-            `}
+            className={cellClass}
             onClick={() => onDateClick(cloneDay)}
-            title={unavailability?.reason || ''}
-          >
+            title={savedRange?.reason || ""}>
             <span className="relative z-10">{formattedDate}</span>
-            {unavailability && (
-              <div className="absolute bottom-1 w-1 h-1 bg-red-400 rounded-full"></div>
-            )}
-          </div>
+          </div>,
         );
         day = addDays(day, 1);
       }
       rows.push(
-        <div className="grid grid-cols-7" key={day.toString()}>
+        <div
+          className="grid grid-cols-7"
+          key={day.toString()}>
           {days}
-        </div>
+        </div>,
       );
       days = [];
     }
-    return <div className="border border-gray-100 rounded-xl overflow-hidden">{rows}</div>;
+    return (
+      <div className="border border-gray-100 rounded-xl overflow-hidden">
+        {rows}
+      </div>
+    );
   };
 
   const onDateClick = (day: Date) => {
-    if (!onSelectRange) return;
-
-    if (!selectedRange.start || (selectedRange.start && selectedRange.end)) {
-      setSelectedRange({ start: day, end: null });
-    } else {
-      const start = selectedRange.start < day ? selectedRange.start : day;
-      const end = selectedRange.start < day ? day : selectedRange.start;
-      setSelectedRange({ start, end });
-      onSelectRange(start, end);
+    // If clicking a saved range, delete it
+    const matched = unavailabilities.find((u) =>
+      isWithinInterval(day, {
+        start: parseISO(u.start_date),
+        end: parseISO(u.end_date),
+      }),
+    );
+    if (matched) {
+      setPendingDelete(matched);
+      return;
     }
+
+    // First click of new range
+    if (!selectingStart) {
+      setSelectingStart(day);
+      setSelectingEnd(null);
+      return;
+    }
+
+    // Second click: set pending end (wait for confirm)
+    if (!selectingEnd) {
+      setSelectingEnd(day);
+      return;
+    }
+
+    // Clicking again resets
+    setSelectingStart(day);
+    setSelectingEnd(null);
+  };
+
+  const handleConfirm = () => {
+    if (!selectingStart || !selectingEnd) return;
+    const start = selectingStart < selectingEnd ? selectingStart : selectingEnd;
+    const end = selectingStart < selectingEnd ? selectingEnd : selectingStart;
+    setSelectingStart(null);
+    setSelectingEnd(null);
+    onSelectRange(start, end);
+  };
+
+  const handleCancel = () => {
+    setSelectingStart(null);
+    setSelectingEnd(null);
   };
 
   return (
@@ -145,15 +233,80 @@ const Calendar: React.FC<CalendarProps> = ({ carId, unavailabilities, onSelectRa
       {renderHeader()}
       {renderDays()}
       {renderCells()}
-      
+
+      {pendingDelete && (
+        <div className="mt-4 flex items-center justify-between gap-3 p-3 bg-red-50 rounded-xl border border-red-200">
+          <span className="text-sm text-red-700 font-medium">
+            Eliminar {format(parseISO(pendingDelete.start_date), "dd/MM/yyyy")}
+            {" → "}
+            {format(parseISO(pendingDelete.end_date), "dd/MM/yyyy")}?
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingDelete(null)}
+              className="px-3 py-1.5 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onDeleteRange(pendingDelete.id);
+                setPendingDelete(null);
+              }}
+              className="px-4 py-1.5 text-sm font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+              Eliminar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectingStart && selectingEnd && (
+        <div className="mt-4 flex items-center justify-between gap-3 p-3 bg-brand-orange/10 rounded-xl border border-brand-orange/20">
+          <span className="text-sm text-brand-navy font-medium">
+            {format(
+              selectingStart < selectingEnd ? selectingStart : selectingEnd,
+              "dd/MM/yyyy",
+            )}
+            {" → "}
+            {format(
+              selectingStart < selectingEnd ? selectingEnd : selectingStart,
+              "dd/MM/yyyy",
+            )}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-3 py-1.5 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="px-4 py-1.5 text-sm font-semibold bg-brand-orange text-white rounded-lg hover:bg-brand-orange/90 transition-colors">
+              Confirmar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectingStart && !selectingEnd && (
+        <p className="mt-3 text-xs text-gray-400 text-center">
+          Seleccioná la fecha de fin
+        </p>
+      )}
+
       <div className="mt-6 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
-          <span className="text-gray-500">No disponible</span>
+          <span className="text-gray-500">
+            No disponible (click para eliminar)
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-brand-orange rounded"></div>
-          <span className="text-gray-500">Seleccionado</span>
+          <span className="text-gray-500">Primera fecha seleccionada</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 border border-gray-200 rounded"></div>

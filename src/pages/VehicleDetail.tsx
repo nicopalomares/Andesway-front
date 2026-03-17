@@ -31,6 +31,8 @@ export default function VehicleDetail() {
     start: Date | null;
     end: Date | null;
   }>({start: null, end: null});
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [customLocation, setCustomLocation] = useState("");
 
   useEffect(() => {
     async function fetchVehicleData() {
@@ -98,10 +100,22 @@ export default function VehicleDetail() {
 
   const whatsappNumber = "5492617608355";
 
-  const buildWhatsappUrl = (start: Date, end: Date) => {
-    const days = differenceInDays(end, start) + 1;
+  const effectiveLocation =
+    pickupLocation === "Otra ubicación"
+      ? customLocation.trim()
+      : pickupLocation;
+  const canSubmit = !!(dateRange.start && dateRange.end && effectiveLocation);
+
+  const buildPickupWhatsappUrl = () => {
+    if (!dateRange.start || !dateRange.end || !effectiveLocation) return "#";
+    const isSingleDay =
+      format(dateRange.start, "dd/MM/yyyy") ===
+      format(dateRange.end, "dd/MM/yyyy");
+    const dateStr = isSingleDay
+      ? format(dateRange.start, "dd/MM/yyyy")
+      : `${format(dateRange.start, "dd/MM/yyyy")} al ${format(dateRange.end, "dd/MM/yyyy")}`;
     const msg = encodeURIComponent(
-      `Hola Andes Way! Me gustaría reservar el vehículo: ${vehicle.title} (Modelo ${vehicle.year}).\n\n📅 Fechas: ${format(start, "dd/MM/yyyy")} al ${format(end, "dd/MM/yyyy")} (${days} día${days !== 1 ? "s" : ""}).\n\n¿Podrían confirmar disponibilidad y precio?`,
+      `Hola! Quisiera consultar sobre un retiro.\n� Vehículo: ${vehicle.title} (Modelo ${vehicle.year})\n�📍 Lugar de retiro: ${effectiveLocation}\n📅 Fecha/s: ${dateStr}`,
     );
     return `https://wa.me/${whatsappNumber}?text=${msg}`;
   };
@@ -335,12 +349,40 @@ export default function VehicleDetail() {
                 />
               </div>
 
+              {/* Pickup location */}
+              <div className="px-6 pb-4">
+                <label className="block text-sm font-semibold text-brand-navy mb-2">
+                  Lugar de retiro
+                </label>
+                <select
+                  value={pickupLocation}
+                  onChange={(e) => {
+                    setPickupLocation(e.target.value);
+                    setCustomLocation("");
+                  }}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-all bg-white">
+                  <option value="">Seleccioná un lugar de retiro</option>
+                  <option value="Aeropuerto">Aeropuerto</option>
+                  <option value="Terminal de buses">Terminal de buses</option>
+                  <option value="Otra ubicación">Otra ubicación</option>
+                </select>
+                {pickupLocation === "Otra ubicación" && (
+                  <input
+                    type="text"
+                    placeholder="Escribí tu ubicación..."
+                    value={customLocation}
+                    onChange={(e) => setCustomLocation(e.target.value)}
+                    className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-all"
+                  />
+                )}
+              </div>
+
               {/* Summary + CTA */}
               <div className="px-6 pb-6">
-                {dateRange.start && dateRange.end ? (
-                  <div className="bg-brand-navy rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="bg-brand-navy rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {canSubmit ? (
                     <a
-                      href={buildWhatsappUrl(dateRange.start, dateRange.end)}
+                      href={buildPickupWhatsappUrl()}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setShowCalendar(false)}
@@ -348,13 +390,15 @@ export default function VehicleDetail() {
                       <MessageCircle size={20} />
                       Confirmar por WhatsApp
                     </a>
-                  </div>
-                ) : (
-                  <p className="text-center text-sm text-gray-400 py-2">
-                    Hacé clic en el día de inicio y luego en el día de fin para
-                    seleccionar el rango.
-                  </p>
-                )}
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-500/50 text-white px-6 py-3 rounded-xl font-bold whitespace-nowrap cursor-not-allowed">
+                      <MessageCircle size={20} />
+                      Confirmar por WhatsApp
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
           </motion.div>
