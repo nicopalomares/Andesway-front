@@ -1,5 +1,5 @@
-import React from 'react';
-import { Calendar, MapPin, Search } from 'lucide-react';
+import React from "react";
+import {Calendar, MapPin, Search} from "lucide-react";
 
 export default function BookingCard() {
   return (
@@ -7,11 +7,14 @@ export default function BookingCard() {
       <h3 className="text-2xl font-display font-bold text-brand-navy mb-6">
         Buscá tu vehículo
       </h3>
-      
+
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-            <MapPin size={16} className="text-brand-orange" />
+            <MapPin
+              size={16}
+              className="text-brand-orange"
+            />
             Lugar de retiro
           </label>
           <select className="w-full p-3 bg-brand-gray-light border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all">
@@ -22,24 +25,30 @@ export default function BookingCard() {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-              <Calendar size={16} className="text-brand-orange" />
+              <Calendar
+                size={16}
+                className="text-brand-orange"
+              />
               Fecha retiro
             </label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               className="w-full p-3 bg-brand-gray-light border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all"
             />
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-              <Calendar size={16} className="text-brand-orange" />
+              <Calendar
+                size={16}
+                className="text-brand-orange"
+              />
               Fecha devolución
             </label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               className="w-full p-3 bg-brand-gray-light border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all"
             />
           </div>
