@@ -49,9 +49,9 @@ export default function Home() {
       <Hero />
 
       {/* Mobile Booking Search (Floating overlap) */}
-      <div className="lg:hidden relative z-20 px-4 -mt-24 mb-8">
+      {/* <div className="lg:hidden relative z-20 px-4 -mt-24 mb-8">
         <BookingCard />
-      </div>
+      </div> */}
 
       {/* Vehicle Grid Section */}
       <section
