@@ -27,18 +27,22 @@ interface CalendarProps {
   carId: string;
   unavailabilities: Unavailability[];
   onSelectRange: (start: Date, end: Date) => void;
-  onDeleteRange: (id: string) => void;
+  onDeleteRange?: (id: string) => void;
+  isAdmin?: boolean;
 }
 
 const Calendar: React.FC<CalendarProps> = ({
   carId,
-  unavailabilities,
+  unavailabilities = [],
   onSelectRange,
   onDeleteRange,
+  isAdmin = false,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectingStart, setSelectingStart] = useState<Date | null>(null);
   const [selectingEnd, setSelectingEnd] = useState<Date | null>(null);
+  const [confirmedStart, setConfirmedStart] = useState<Date | null>(null);
+  const [confirmedEnd, setConfirmedEnd] = useState<Date | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Unavailability | null>(
     null,
   );
@@ -116,13 +120,13 @@ const Calendar: React.FC<CalendarProps> = ({
             ? selectingStart < selectingEnd
               ? selectingStart
               : selectingEnd
-            : null;
+            : (confirmedStart ?? null);
         const pendingEnd =
           selectingStart && selectingEnd
             ? selectingStart < selectingEnd
               ? selectingEnd
               : selectingStart
-            : null;
+            : (confirmedEnd ?? null);
 
         const isInPendingRange =
           pendingStart &&
@@ -192,7 +196,7 @@ const Calendar: React.FC<CalendarProps> = ({
       }),
     );
     if (matched) {
-      setPendingDelete(matched);
+      if (isAdmin) setPendingDelete(matched);
       return;
     }
 
@@ -200,12 +204,24 @@ const Calendar: React.FC<CalendarProps> = ({
     if (!selectingStart) {
       setSelectingStart(day);
       setSelectingEnd(null);
+      setConfirmedStart(null);
+      setConfirmedEnd(null);
       return;
     }
 
-    // Second click: set pending end (wait for confirm)
+    // Second click
     if (!selectingEnd) {
-      setSelectingEnd(day);
+      if (!isAdmin) {
+        // Non-admin: confirm immediately without buttons
+        const start = selectingStart < day ? selectingStart : day;
+        const end = selectingStart < day ? day : selectingStart;
+        setSelectingStart(null);
+        setConfirmedStart(start);
+        setConfirmedEnd(end);
+        onSelectRange(start, end);
+      } else {
+        setSelectingEnd(day);
+      }
       return;
     }
 
@@ -251,7 +267,7 @@ const Calendar: React.FC<CalendarProps> = ({
             <button
               type="button"
               onClick={() => {
-                onDeleteRange(pendingDelete.id);
+                onDeleteRange?.(pendingDelete.id);
                 setPendingDelete(null);
               }}
               className="px-4 py-1.5 text-sm font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
@@ -261,7 +277,7 @@ const Calendar: React.FC<CalendarProps> = ({
         </div>
       )}
 
-      {selectingStart && selectingEnd && (
+      {isAdmin && selectingStart && selectingEnd && (
         <div className="mt-4 flex items-center justify-between gap-3 p-3 bg-brand-orange/10 rounded-xl border border-brand-orange/20">
           <span className="text-sm text-brand-navy font-medium">
             {format(

@@ -344,7 +344,6 @@ export default function VehicleDetail() {
               <div className="px-6 py-4">
                 <CalendarPicker
                   carId={vehicle.id}
-                  unavailabilities={unavailabilities}
                   onSelectRange={(start, end) => setDateRange({start, end})}
                 />
               </div>

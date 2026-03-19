@@ -123,9 +123,11 @@ export default function Navbar() {
                   <LayoutDashboard size={20} />
                 </Link>
               )}
-              <button className="btn-primary py-2 px-5 text-sm">
-                Reservar
-              </button>
+              <a href="/#vehiculos">
+                <button className="btn-primary py-2 px-5 text-sm">
+                  Reservar
+                </button>
+              </a>
             </div>
           </div>
 

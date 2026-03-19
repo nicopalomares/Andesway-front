@@ -786,6 +786,7 @@ export default function Admin() {
                 unavailabilities={carUnavailabilities}
                 onSelectRange={handleRangeSelect}
                 onDeleteRange={handleDeleteRange}
+                isAdmin
               />
             </motion.div>
           </div>
