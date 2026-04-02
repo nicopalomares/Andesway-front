@@ -4,14 +4,13 @@ import VehicleCard from "../components/VehicleCard";
 import Features from "../components/Features";
 import Testimonials from "../components/Testimonials";
 import CorporateFleet from "../components/CorporateFleet";
-import BookingCard from "../components/BookingCard";
-import {VEHICLES as MOCK_VEHICLES} from "../constants";
+import {WHATSAPP_NUMBER} from "../constants";
 import {motion} from "motion/react";
 import {supabase} from "../services/supabase";
 import {Vehicle} from "../types";
 
 export default function Home() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(MOCK_VEHICLES);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -114,12 +113,13 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-brand-navy text-white px-10 py-4 rounded-lg font-bold text-lg hover:bg-opacity-90 transition-all">
-                Reservar Ahora
-              </button>
-              <button className="bg-white text-brand-orange px-10 py-4 rounded-lg font-bold text-lg hover:bg-gray-50 transition-all">
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hola! Quisiera consultar sobre el alquiler de un vehículo.")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white text-brand-orange px-10 py-4 rounded-lg font-bold text-lg hover:bg-gray-50 transition-all text-center">
                 Contactar Asesor
-              </button>
+              </a>
             </div>
           </div>
         </div>

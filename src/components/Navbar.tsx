@@ -156,31 +156,10 @@ export default function Navbar() {
                   key={link.name}
                   href={link.href}
                   className="block px-3 py-2 rounded-md text-base font-medium text-brand-navy hover:text-brand-orange hover:bg-gray-50"
-                  onClick={(e) => {
-                    handleSectionClick(e, link.href);
-                    setIsOpen(false);
-                  }}>
+                  onClick={() => setIsOpen(false)}>
                   {link.name}
                 </a>
               ))}
-              {session ? (
-                <Link
-                  to="/admin"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-brand-navy hover:text-brand-orange hover:bg-gray-50"
-                  onClick={() => setIsOpen(false)}>
-                  Panel Admin
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-brand-navy hover:text-brand-orange hover:bg-gray-50"
-                  onClick={() => setIsOpen(false)}>
-                  Iniciar Sesión
-                </Link>
-              )}
-              <div className="px-3 py-2">
-                <button className="w-full btn-primary">Reservar Ahora</button>
-              </div>
             </div>
           </motion.div>
         )}

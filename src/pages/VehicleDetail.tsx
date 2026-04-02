@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useParams, Link} from "react-router-dom";
 import {supabase} from "../services/supabase";
+import {WHATSAPP_NUMBER} from "../constants";
 import {Vehicle, CarImage} from "../types";
 import {
   Users,
@@ -98,7 +99,7 @@ export default function VehicleDetail() {
     );
   }
 
-  const whatsappNumber = "5492617608355";
+  const whatsappNumber = WHATSAPP_NUMBER;
 
   const effectiveLocation =
     pickupLocation === "Otra ubicación"

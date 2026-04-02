@@ -1,5 +1,6 @@
 import React from "react";
 import {motion} from "motion/react";
+import {WHATSAPP_NUMBER} from "../constants";
 import {
   Truck,
   HardHat,
@@ -186,7 +187,7 @@ export default function CorporateFleet() {
               <ArrowRight size={18} />
             </a>
             <a
-              href="https://wa.me/5492617608355?text=Hola%2C%20me%20interesa%20el%20alquiler%20corporativo"
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hola, me interesa el alquiler corporativo")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary inline-flex items-center justify-center gap-2 px-10 py-4 text-base">

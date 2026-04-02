@@ -7,6 +7,7 @@ import {
   Facebook,
   MessageCircle,
 } from "lucide-react";
+import {WHATSAPP_NUMBER} from "../constants";
 
 export default function Footer() {
   return (
@@ -83,7 +84,7 @@ export default function Footer() {
                   className="text-brand-orange"
                 />
                 <a
-                  href="tel:+5492617608355"
+                  href={`tel:+${WHATSAPP_NUMBER}`}
                   className="hover:text-white transition-colors">
                   +54 9 2617 60-8355
                 </a>
@@ -113,7 +114,7 @@ export default function Footer() {
               momento.
             </p>
             <a
-              href="https://wa.me/5492617608355"
+              href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full bg-[#25D366] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all">
