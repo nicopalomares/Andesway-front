@@ -89,32 +89,19 @@ export default function Navbar() {
 
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              {navLinks.map((link) =>
-                link.href.startsWith("/#") ? (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    onClick={(e) => handleSectionClick(e, link.href)}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      scrolled || !isHomePage
-                        ? "text-brand-navy hover:text-brand-orange"
-                        : "text-white hover:text-brand-orange"
-                    }`}>
-                    {link.name}
-                  </a>
-                ) : (
-                  <Link
-                    key={link.name}
-                    to={link.href}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      scrolled || !isHomePage
-                        ? "text-brand-navy hover:text-brand-orange"
-                        : "text-white hover:text-brand-orange"
-                    }`}>
-                    {link.name}
-                  </Link>
-                ),
-              )}
+              {navLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  onClick={(e) => handleSectionClick(e, link.href)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    scrolled || !isHomePage
+                      ? "text-brand-navy hover:text-brand-orange"
+                      : "text-white hover:text-brand-orange"
+                  }`}>
+                  {link.name}
+                </a>
+              ))}
               {session && (
                 <Link
                   to="/admin"
@@ -164,28 +151,18 @@ export default function Navbar() {
             exit={{opacity: 0, height: 0}}
             className="md:hidden bg-white border-b border-gray-100">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {navLinks.map((link) =>
-                link.href.startsWith("/#") ? (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-brand-navy hover:text-brand-orange hover:bg-gray-50"
-                    onClick={(e) => {
-                      handleSectionClick(e, link.href);
-                      setIsOpen(false);
-                    }}>
-                    {link.name}
-                  </a>
-                ) : (
-                  <Link
-                    key={link.name}
-                    to={link.href}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-brand-navy hover:text-brand-orange hover:bg-gray-50"
-                    onClick={() => setIsOpen(false)}>
-                    {link.name}
-                  </Link>
-                ),
-              )}
+              {navLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="block px-3 py-2 rounded-md text-base font-medium text-brand-navy hover:text-brand-orange hover:bg-gray-50"
+                  onClick={(e) => {
+                    handleSectionClick(e, link.href);
+                    setIsOpen(false);
+                  }}>
+                  {link.name}
+                </a>
+              ))}
               {session ? (
                 <Link
                   to="/admin"

@@ -313,93 +313,95 @@ export default function VehicleDetail() {
             initial={{opacity: 0}}
             animate={{opacity: 1}}
             exit={{opacity: 0}}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm"
             onClick={(e) =>
               e.target === e.currentTarget && setShowCalendar(false)
             }>
-            <motion.div
-              initial={{opacity: 0, scale: 0.95, y: 20}}
-              animate={{opacity: 1, scale: 1, y: 0}}
-              exit={{opacity: 0, scale: 0.95, y: 20}}
-              transition={{type: "spring", stiffness: 300, damping: 25}}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-                <div>
-                  <h3 className="text-xl font-display font-bold text-brand-navy">
-                    Seleccioná las fechas
-                  </h3>
-                  <p className="text-sm text-gray-400 mt-0.5">
-                    {vehicle.title} · ${vehicle.price_per_day} USD/día
-                  </p>
+            <div className="flex min-h-full items-center justify-center p-4">
+              <motion.div
+                initial={{opacity: 0, scale: 0.95, y: 20}}
+                animate={{opacity: 1, scale: 1, y: 0}}
+                exit={{opacity: 0, scale: 0.95, y: 20}}
+                transition={{type: "spring", stiffness: 300, damping: 25}}
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-lg">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+                  <div>
+                    <h3 className="text-xl font-display font-bold text-brand-navy">
+                      Seleccioná las fechas
+                    </h3>
+                    <p className="text-sm text-gray-400 mt-0.5">
+                      {vehicle.title} · ${vehicle.price_per_day} USD/día
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowCalendar(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700">
+                    <X size={20} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowCalendar(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700">
-                  <X size={20} />
-                </button>
-              </div>
 
-              {/* Calendar */}
-              <div className="px-6 py-4">
-                <CalendarPicker
-                  carId={vehicle.id}
-                  onSelectRange={(start, end) => setDateRange({start, end})}
-                />
-              </div>
-
-              {/* Pickup location */}
-              <div className="px-6 pb-4">
-                <label className="block text-sm font-semibold text-brand-navy mb-2">
-                  Lugar de retiro
-                </label>
-                <select
-                  value={pickupLocation}
-                  onChange={(e) => {
-                    setPickupLocation(e.target.value);
-                    setCustomLocation("");
-                  }}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-all bg-white">
-                  <option value="">Seleccioná un lugar de retiro</option>
-                  <option value="Aeropuerto">Aeropuerto</option>
-                  <option value="Terminal de buses">Terminal de buses</option>
-                  <option value="Otra ubicación">Otra ubicación</option>
-                </select>
-                {pickupLocation === "Otra ubicación" && (
-                  <input
-                    type="text"
-                    placeholder="Escribí tu ubicación..."
-                    value={customLocation}
-                    onChange={(e) => setCustomLocation(e.target.value)}
-                    className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-all"
+                {/* Calendar */}
+                <div className="px-6 py-4">
+                  <CalendarPicker
+                    carId={vehicle.id}
+                    onSelectRange={(start, end) => setDateRange({start, end})}
                   />
-                )}
-              </div>
+                </div>
 
-              {/* Summary + CTA */}
-              <div className="px-6 pb-6">
-                <div className="bg-brand-navy rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  {canSubmit ? (
-                    <a
-                      href={buildPickupWhatsappUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setShowCalendar(false)}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap">
-                      <MessageCircle size={20} />
-                      Confirmar por WhatsApp
-                    </a>
-                  ) : (
-                    <button
-                      disabled
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-500/50 text-white px-6 py-3 rounded-xl font-bold whitespace-nowrap cursor-not-allowed">
-                      <MessageCircle size={20} />
-                      Confirmar por WhatsApp
-                    </button>
+                {/* Pickup location */}
+                <div className="px-6 pb-4">
+                  <label className="block text-sm font-semibold text-brand-navy mb-2">
+                    Lugar de retiro
+                  </label>
+                  <select
+                    value={pickupLocation}
+                    onChange={(e) => {
+                      setPickupLocation(e.target.value);
+                      setCustomLocation("");
+                    }}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-all bg-white">
+                    <option value="">Seleccioná un lugar de retiro</option>
+                    <option value="Aeropuerto">Aeropuerto</option>
+                    <option value="Terminal de buses">Terminal de buses</option>
+                    <option value="Otra ubicación">Otra ubicación</option>
+                  </select>
+                  {pickupLocation === "Otra ubicación" && (
+                    <input
+                      type="text"
+                      placeholder="Escribí tu ubicación..."
+                      value={customLocation}
+                      onChange={(e) => setCustomLocation(e.target.value)}
+                      className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-all"
+                    />
                   )}
                 </div>
-              </div>
-            </motion.div>
+
+                {/* Summary + CTA */}
+                <div className="px-6 pb-6">
+                  <div className="bg-brand-navy rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {canSubmit ? (
+                      <a
+                        href={buildPickupWhatsappUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setShowCalendar(false)}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap">
+                        <MessageCircle size={20} />
+                        Confirmar por WhatsApp
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-500/50 text-white px-6 py-3 rounded-xl font-bold whitespace-nowrap cursor-not-allowed">
+                        <MessageCircle size={20} />
+                        Confirmar por WhatsApp
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

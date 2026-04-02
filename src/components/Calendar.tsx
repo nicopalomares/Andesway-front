@@ -316,9 +316,7 @@ const Calendar: React.FC<CalendarProps> = ({
       <div className="mt-6 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
-          <span className="text-gray-500">
-            No disponible (click para eliminar)
-          </span>
+          <span className="text-gray-500">No disponible</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-brand-orange rounded"></div>

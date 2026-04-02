@@ -91,12 +91,6 @@ export default function Home() {
             ))}
           </div>
         )}
-
-        <div className="mt-16 text-center">
-          <button className="btn-secondary px-10">
-            Ver todos los vehículos
-          </button>
-        </div>
       </section>
 
       <CorporateFleet />
