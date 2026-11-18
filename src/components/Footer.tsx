@@ -126,8 +126,7 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-white/10 text-center text-gray-500 text-xs">
           <p>
-            © {new Date().getFullYear()} Andes Way – Rent a Car. Todos los
-            derechos reservados.
+            Copyright {new Date().getFullYear()} Andes Way - Rent a Car. Todos los
           </p>
         </div>
       </div>

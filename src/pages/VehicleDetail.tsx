@@ -116,7 +116,7 @@ export default function VehicleDetail() {
       ? format(dateRange.start, "dd/MM/yyyy")
       : `${format(dateRange.start, "dd/MM/yyyy")} al ${format(dateRange.end, "dd/MM/yyyy")}`;
     const msg = encodeURIComponent(
-      `Hola! Quisiera consultar sobre un retiro.\n� Vehículo: ${vehicle.title} (Modelo ${vehicle.year})\n�📍 Lugar de retiro: ${effectiveLocation}\n📅 Fecha/s: ${dateStr}`,
+      `Hola! Quisiera consultar sobre un retiro.\nVehículo: ${vehicle.title} (Modelo ${vehicle.year})\nLugar de retiro: ${effectiveLocation}\nFecha/s: ${dateStr}`,
     );
     return `https://wa.me/${whatsappNumber}?text=${msg}`;
   };

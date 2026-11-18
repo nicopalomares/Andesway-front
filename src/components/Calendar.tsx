@@ -254,7 +254,7 @@ const Calendar: React.FC<CalendarProps> = ({
         <div className="mt-4 flex items-center justify-between gap-3 p-3 bg-red-50 rounded-xl border border-red-200">
           <span className="text-sm text-red-700 font-medium">
             Eliminar {format(parseISO(pendingDelete.start_date), "dd/MM/yyyy")}
-            {" → "}
+            {" - "}
             {format(parseISO(pendingDelete.end_date), "dd/MM/yyyy")}?
           </span>
           <div className="flex gap-2">
@@ -284,7 +284,7 @@ const Calendar: React.FC<CalendarProps> = ({
               selectingStart < selectingEnd ? selectingStart : selectingEnd,
               "dd/MM/yyyy",
             )}
-            {" → "}
+            {" - "}
             {format(
               selectingStart < selectingEnd ? selectingEnd : selectingStart,
               "dd/MM/yyyy",

@@ -1,4 +1,4 @@
-# Andes Way — Rent a Car
+# Andes Way - Rent a Car
 
 Responsive website for promoting and managing a rental vehicle fleet in Mendoza, Argentina. It includes a public catalog, vehicle details, availability calendar, WhatsApp inquiries, and a Supabase-protected administration panel.
 
